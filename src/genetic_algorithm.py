@@ -1,7 +1,9 @@
 from deap.base import Toolbox, Fitness
-from deap.tools import initRepeat, selTournament, cxOnePoint, mutFlipBit
+from deap.tools import initRepeat, selTournament, cxOnePoint, mutFlipBit, Statistics
+from deap.algorithms import eaSimple
 from deap import creator
 
+from numpy import max, mean
 from random import randint, random
 
 class GeneticAlgorithm:
@@ -27,46 +29,18 @@ class GeneticAlgorithm:
         attribute_flip_probability = 1.0/individual_length
         self.toolbox.register("mutate", mutFlipBit, indpb=attribute_flip_probability)
     
-    def calculate_fitness(self, individuals):
-        fitnesses = list(map(self.toolbox.evaluate, individuals))
-        for individual, fitness in zip(individuals, fitnesses):
-            individual.fitness.values = fitness
+        self.stats = Statistics(lambda individual: individual.fitness.values)
+        self.stats.register("max", max)
+        self.stats.register("avg", mean)
 
     def run(self, population_size, crossover_probability, mutation_probability, generation_threshold):
-        max_fitnesses, avg_fitnesses = [], []
+        
         population = self.toolbox.create_population(n=population_size)
-        self.calculate_fitness(population)
+        population, logbook = eaSimple(population, self.toolbox, crossover_probability, mutation_probability, generation_threshold, self.stats, verbose=True)
+        generations, max_fitnesses, avg_fitnesses = logbook.select("gen", "max", "avg")
+        
         fitnesses = [individual.fitness.values[0] for individual in population]
-        best_individual = population[0]
-        generations = 0
-        while max(fitnesses) < self.individual_length and generations < generation_threshold:
-            # numpy array
-            offspring = self.toolbox.select(population, len(population))
-
-            offspring = list(map(self.toolbox.clone, offspring))
-            for first, second in zip(offspring[::2], offspring[1::2]):
-                if random() < crossover_probability:
-                    self.toolbox.mate(first, second)
-                    del first.fitness.values
-                    del second.fitness.values
-
-            for mutant in offspring:
-                if random() < mutation_probability:
-                    self.toolbox.mutate(mutant)
-                    del mutant.fitness.values
-
-            fresh_individuals = list(filter(lambda individual : not individual.fitness.valid, offspring))
-            self.calculate_fitness(fresh_individuals)
-            population[:] = offspring
-            fitnesses = [individual.fitness.values[0] for individual in population]
-
-            max_fitness = max(fitnesses)
-            
-            avg_fitnesses.append(sum(fitnesses) / len(population))
-            max_fitnesses.append(max_fitness)
-
-            best_individual = population[ fitnesses.index(max_fitness) ]
-
-            generations += 1
+        max_fitness = max(fitnesses)
+        best_individual = population[ fitnesses.index(max_fitness) ]
 
         return best_individual, max_fitnesses, avg_fitnesses
