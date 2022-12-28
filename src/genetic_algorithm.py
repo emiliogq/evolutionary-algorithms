@@ -1,5 +1,5 @@
 from deap.base import Toolbox, Fitness
-from deap.tools import initRepeat, selTournament, cxOnePoint, mutFlipBit, Statistics
+from deap.tools import initRepeat, selTournament, cxOnePoint, mutFlipBit, Statistics, HallOfFame
 from deap.algorithms import eaSimple
 from deap import creator
 
@@ -7,7 +7,7 @@ from numpy import max, mean
 from random import randint, random
 
 class GeneticAlgorithm:
-    def __init__(self, individual_length) -> None:
+    def __init__(self, individual_length, hall_of_fame_size) -> None:
         self.toolbox = Toolbox()
         self.individual_length = individual_length
         self.toolbox.register("zeroOrOne", randint, 0,1)
@@ -33,10 +33,12 @@ class GeneticAlgorithm:
         self.stats.register("max", max)
         self.stats.register("avg", mean)
 
+        self.hall_of_fame = HallOfFame(hall_of_fame_size)
+
     def run(self, population_size, crossover_probability, mutation_probability, generation_threshold):
         
         population = self.toolbox.create_population(n=population_size)
-        population, logbook = eaSimple(population, self.toolbox, crossover_probability, mutation_probability, generation_threshold, self.stats, verbose=True)
+        population, logbook = eaSimple(population, self.toolbox, crossover_probability, mutation_probability, generation_threshold, self.stats, halloffame=self.hall_of_fame, verbose=True)
         generations, max_fitnesses, avg_fitnesses = logbook.select("gen", "max", "avg")
         
         fitnesses = [individual.fitness.values[0] for individual in population]
