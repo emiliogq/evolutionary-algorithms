@@ -7,7 +7,7 @@ from numpy import max, mean
 from random import randint, random
 
 class GeneticAlgorithm:
-    def __init__(self, individual_length, hall_of_fame_size) -> None:
+    def __init__(self, individual_length, hall_of_fame_size, evaluation_function) -> None:
         self.toolbox = Toolbox()
         self.individual_length = individual_length
         self.toolbox.register("zeroOrOne", randint, 0,1)
@@ -20,7 +20,7 @@ class GeneticAlgorithm:
         
         self.toolbox.register("create_population", initRepeat, list, self.toolbox.create_individual)
         
-        self.toolbox.register("evaluate", lambda individual: (sum(individual),))
+        self.toolbox.register("evaluate", lambda individual: (evaluation_function(individual),))
         
         self.toolbox.register("select", selTournament, tournsize=3)
 
@@ -45,4 +45,4 @@ class GeneticAlgorithm:
         max_fitness = max(fitnesses)
         best_individual = population[ fitnesses.index(max_fitness) ]
 
-        return best_individual, max_fitnesses, avg_fitnesses
+        return best_individual, max_fitnesses, avg_fitnesses, self.hall_of_fame
