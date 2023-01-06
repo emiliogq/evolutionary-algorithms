@@ -1,8 +1,10 @@
-from random import seed
-from genetic_algorithm import GeneticAlgorithm
+from numpy.random import randint, seed
+from one_max.one_max_problem import OneMaxProblem
+seed(42)
 
 def test_one_max_problem():
-    seed(42)
-    best_individual, _, _ = GeneticAlgorithm(100).run(200, 0.9, 0.1, 50)
-    expected = [1]*100
-    assert best_individual == expected
+    individual_length = 100
+    randomized_binary_permutation = randint(2, size=individual_length)
+    omp = OneMaxProblem()
+    expected = 56
+    assert omp.evaluate_ga(randomized_binary_permutation) == expected
